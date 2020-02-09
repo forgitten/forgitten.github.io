@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<script src = "source/vec2.js"></script>
 	<script src = "source/physics.js"></script>
 </head>
 <body>
@@ -10,8 +11,8 @@
 		var context = canvas.getContext('2d');
 		
 		var spheres = [
-			new Sphere({pos:{x:0, y:20}, radius:20, speed:{x:0.3, y:0.1}}),
-			new Sphere({pos:{x:40, y:20}, radius:20, speed:{x:-0.1, y:0}})
+			new Sphere({pos:{x:10, y:20}, radius:20, speed:{x:0.6, y:-0.05}}),
+			new Sphere({pos:{x:80, y:20}, radius:20, speed:{x:-0.2, y:0.05}})
 		];
 		
 		
