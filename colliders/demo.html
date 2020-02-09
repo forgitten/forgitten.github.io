@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src = "source/physics.js"></script>
+</head>
+<body>
+	<canvas id ="main"></canvas>
+	<script>
+		var canvas = document.getElementById('main');
+		var context = canvas.getContext('2d');
+		
+		var spheres = [
+			new Sphere({pos:{x:0, y:20}, radius:20, speed:{x:0.3, y:0.1}}),
+			new Sphere({pos:{x:40, y:20}, radius:20, speed:{x:-0.1, y:0}})
+		];
+		
+		
+		
+		
+		function main(){
+			requestAnimationFrame(main);
+			
+			spheres.forEach(function(s){
+				if(s.speed) {
+				s.pos.x += s.speed.x; s.pos.y += s.speed.y;
+				};
+			});
+			
+			Sphere.tempHandleSphere(spheres[0], spheres[1]);
+			context.clearRect(0,0, canvas.width, canvas.height);
+			
+			spheres.forEach(function(s){
+				context.beginPath();
+				context.arc(s.pos.x, s.pos.y, s.radius, 0, 2 * Math.PI);
+				context.stroke(); 
+			});
+			
+		};
+		main();
+	</script>
+
+</body>
+</html>
