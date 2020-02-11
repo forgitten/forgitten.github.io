@@ -1,11 +1,27 @@
 (function(){
+	
+	
+	//TODO kindof lacks structure
+	
+	//requires vec2.js
+	
+	
 	//TODO the biggest difficulty will be handling 
 	//stacks
-	//and multi collisions where 3 ore more objects are intersecting
+	//and multi collisions where 3 or more objects are intersecting
 	
+	
+		//unused right now
 		function ICollision(){
-		
-	};
+			//remember an intersection doesnt always happen point to point, it could be full wall to wall!
+			this.point;
+			//how far they were inside eachother
+			this.insideDistance;
+			this.normal;
+			this.actors;
+			//intended to match the combined collision speeds, can be used for e.g. how loud the sound is, how much particle effect
+			this.volume;
+		};
 	
 	
 	function CollisionManager(){
@@ -17,16 +33,32 @@
 	
 	
 	CollisionManager.hookNames = {
-		
+		//these are parts of the collision manager that are expected to be user overwritten.
+		//the important one is how collisions are handled, by default they will just bounce.
 	};
 	
 	
-	CollisionManager.prototype = {};
+	CollisionManager.prototype = {
+		filter(){//generate a list of potential pair intersections while removing impossible ones
+			
+		},
+		
+		
+		
+		bounce:function(a, b, data){//assuming the collision is resolved, flip the two object's velocities and apply friction
+			
+		
+			
+		}
+		
+	};
 	
 	
 	
 	function ICollider(settings){
 		
+		this.friction;
+		this.mass = settings.mass || 1;
 		this.pos = settings.pos;
 		this.speed = settings.speed;
 		this.acc;
@@ -43,6 +75,18 @@
 	
 	
 	
+	function Line(){
+		
+	}
+	
+	Line.prototype = {
+		
+	};
+	
+	
+	
+	
+	
 	function Sphere(settings){
 		ICollider.apply(this, arguments);
 		
@@ -55,6 +99,7 @@
 	//then applies friction
 	Sphere.tempHandleSphere = function(s1, s2){
 		var inside = s1.violation(s2);//how far they are inside eachother
+		var massDiff = s1.mass / (s1.mass + s2.mass);
 		
 		if(inside > 0) return; 
 		
@@ -62,8 +107,15 @@
 		var v = new Vec(s2.pos.x - s1.pos.x, s2.pos.y - s1.pos.y).normalize();//vector between them
 		var vm = Math.sqrt(v.x * v.x + v.y *v.y);
 		if (vm == 0 ) throw "0 division";
-		s1.pos.x += v.x * inside / 2, s1.pos.y += v.y * inside / 2;
-		s2.pos.x -= v.x * inside / 2, s2.pos.y -= v.y * inside / 2;
+		
+		
+		//TODO add Mass calculations
+		s1.pos.x += v.x * inside * massDiff, s1.pos.y += v.y * inside * massDiff;
+		s2.pos.x -= v.x * inside * (1 - massDiff), s2.pos.y -= v.y * inside * (1 - massDiff);
+		
+		//s1.pos.x += v.x * inside / 2, s1.pos.y += v.y * inside / 2;
+		//s2.pos.x -= v.x * inside / 2, s2.pos.y -= v.y * inside / 2;
+		
 		
 		//at this point they should no longer be contacting
 		//TODO mirror their velocities
