@@ -14,14 +14,25 @@
 		
 		
 		var spheres = [
-			new Sphere({pos:{x:180, y:220}, radius:20, speed:{x:0.6, y:-0.05}, mass : 100}),
-			new Sphere({pos:{x:220, y:220}, radius:20, speed:{x:-0.2, y:0.05}}),
+			new Sphere({pos:{x:180, y:220}, radius:20, speed:{x:0.6, y:-0.05}, mass : 4}),
+			new Sphere({pos:{x:220, y:220}, radius:5, speed:{x:-0.2, y:0.05}, mass: 1}),
 			new Sphere({pos:{x:200, y:270}, radius:30, speed:{x:-0.2, y:-0.8}}),
-			new Sphere({pos:{x:190, y:400}, radius:30, speed:{x:-0.2, y:-5}, mass:100}),
+			new Sphere({pos:{x:190, y:400}, radius:80, speed:{x:-0.2, y:-5}, mass:5}),
 		];
 		
 		
+		function addRSpheres(n = 1){
+			function r(x, y){return x + Math.round(Math.random() * (y - x))};
 		
+			spheres.push(new Sphere({ pos:{x:r(50, 500), y:r(50, 500)}, radius: r(5, 40), speed:{x:r(-5, 5)/5, y:r(-5, 5)/5}, mass:r(1, 30) }));
+			
+			
+			if(n > 1){
+				addRSpheres(--n);
+			}
+		}
+		
+		addRSpheres(10);
 		
 		function main(){
 			requestAnimationFrame(main);
@@ -48,8 +59,9 @@
 			
 			spheres.forEach(function(s){
 				context.beginPath();
+				context.fillStyle = "pink";
 				context.arc(s.pos.x, s.pos.y, s.radius, 0, 2 * Math.PI);
-				context.stroke(); 
+				context.fill(); 
 			});
 			
 		};
