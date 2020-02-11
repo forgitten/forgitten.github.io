@@ -75,12 +75,32 @@
 	
 	
 	
-	function Line(){
-		
+	
+	
+	
+	//Lines are theoretically jank because if they rotate then they can fast travel - probably better used statically
+	//if you want long rigid shapes use polygons.
+	function Line(x1, y1, x2, y2){
+		this.filled  = 0; //-1 for left, 1 for right
+		this.capped = true;
 	}
 	
 	Line.prototype = {
+		violation:function( s ){
+			
+		},
 		
+		
+		
+		
+		violationCircle:function(c){
+			//to check if the circle intersects the line, perform a dot product on a ray perpendicular to the circle
+			//and see if the distance between the circle center and projected point is smaller than the radius
+			
+			
+			
+		},
+		violationLine:function(){}
 	};
 	
 	
@@ -109,9 +129,9 @@
 		if (vm == 0 ) throw "0 division";
 		
 		
-		//TODO add Mass calculations
-		s1.pos.x += v.x * inside * massDiff, s1.pos.y += v.y * inside * massDiff;
-		s2.pos.x -= v.x * inside * (1 - massDiff), s2.pos.y -= v.y * inside * (1 - massDiff);
+		//TODO I may have the mass reversed.
+		s1.pos.x += v.x * inside * (1 - massDiff), s1.pos.y += v.y * inside * (1 - massDiff);
+		s2.pos.x -= v.x * inside * massDiff, s2.pos.y -= v.y * inside * massDiff;
 		
 		//s1.pos.x += v.x * inside / 2, s1.pos.y += v.y * inside / 2;
 		//s2.pos.x -= v.x * inside / 2, s2.pos.y -= v.y * inside / 2;
@@ -121,8 +141,8 @@
 		//TODO mirror their velocities
 		var pv = new Vec(v.y,-v.x);//perpendicular to line between them, normalized
 		
-		s1.speed = new Vec(s1.speed.x, s1.speed.y).mirror(v);
-		s2.speed = new Vec(s2.speed.x, s2.speed.y).mirror(v);
+		s1.speed = new Vec(s1.speed.x, s1.speed.y).mirror(v).multiply( 1 - massDiff);
+		s2.speed = new Vec(s2.speed.x, s2.speed.y).mirror(v).multiply(massDiff);
 	};
 	
 	
