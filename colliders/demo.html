@@ -18,13 +18,15 @@
 			new Sphere({pos:{x:220, y:220}, radius:5, speed:{x:-0.2, y:0.05}, mass: 1}),
 			new Sphere({pos:{x:200, y:270}, radius:30, speed:{x:-0.2, y:-0.8}}),
 			new Sphere({pos:{x:190, y:400}, radius:80, speed:{x:-0.2, y:-5}, mass:5}),
+			
+			new Line(4, 3, 400, 900, {speed:{x:0.0001,y:0}, pos:{x:0, y:0}, mass:1})
 		];
 		
 		
 		function addRSpheres(n = 1){
 			function r(x, y){return x + Math.round(Math.random() * (y - x))};
 		
-			spheres.push(new Sphere({ pos:{x:r(50, 500), y:r(50, 500)}, radius: r(5, 40), speed:{x:r(-5, 5)/5, y:r(-5, 5)/5}, mass:r(1, 30) }));
+			spheres.push(new Sphere({ pos:{x:r(50, 500), y:r(50, 500)}, radius: r(5, 20), speed:{x:r(-5, 5)/5, y:r(-5, 5)/5}, mass:r(1, 30) }));
 			
 			
 			if(n > 1){
@@ -32,14 +34,14 @@
 			}
 		}
 		
-		addRSpheres(10);
+		//addRSpheres(15);
 		
 		function main(){
 			requestAnimationFrame(main);
 			
 			spheres.forEach(function(s){
 				if(s.speed) {
-				s.pos.x += s.speed.x; s.pos.y += s.speed.y;
+				s.move(s.speed.x, s.speed.y);
 				};
 			});
 			
@@ -58,10 +60,22 @@
 			
 			
 			spheres.forEach(function(s){
-				context.beginPath();
-				context.fillStyle = "pink";
-				context.arc(s.pos.x, s.pos.y, s.radius, 0, 2 * Math.PI);
-				context.fill(); 
+				if (s instanceof Sphere ){
+			
+					context.beginPath();
+					context.fillStyle = "pink";
+					context.arc(s.pos.x, s.pos.y, s.radius, 0, 2 * Math.PI);
+					context.fill(); 
+				}else{
+					context.save();
+					context.strokeStyle = "orange";
+					context.lineWidth = 3;
+					context.beginPath();
+					context.moveTo(s.p1.x, s.p1.y);
+					context.lineTo(s.p2.x, s.p2.y);
+					context.stroke();
+					context.restore();
+				}
 			});
 			
 		};
