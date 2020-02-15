@@ -14,17 +14,29 @@
 	//and multi collisions where 3 or more objects are intersecting
 	
 	
-		//unused right now
-		function ICollision(){
-			//remember an intersection doesnt always happen point to point, it could be full wall to wall!
-			this.point;
-			//how far they were inside eachother
-			this.insideDistance;
-			this.normal;
-			this.actors;
-			//intended to match the combined collision speeds, can be used for e.g. how loud the sound is, how much particle effect
-			this.volume;
-		};
+	//unused right now
+	function ICollision(){
+		//remember an intersection doesnt always happen point to point, it could be full wall to wall!
+		this.point;
+		//how far they were inside eachother
+		this.insideDistance;
+		this.normal;
+		this.actors;
+		//intended to match the combined collision speeds, can be used for e.g. how loud the sound is, how much particle effect
+		this.volume;
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	function CollisionManager(){
@@ -63,7 +75,7 @@
 		this.friction;
 		this.mass = settings.mass || 1;
 		this.pos = new Vec(settings.pos.x, settings.pos.y);
-		this.speed = settings.speed;
+		this.speed = new Vec(settings.speed.x, settings.speed.y);
 		this.acc;
 	};
 	
@@ -90,6 +102,15 @@
 	
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	//TODO right now POS does nothing
 	
 	//Lines are theoretically jank because if they rotate then they can fast travel - probably better used statically
@@ -101,8 +122,9 @@
 		this.filled  = 0; //-1 for left, 1 for right
 		this.capped = true;
 	}
+	Line.prototype = Object.create(ICollider);
 	
-	Line.prototype = {
+	extend (Line.prototype, {
 		violation:function( s ){
 			if(s instanceof Sphere){
 				return this.violationSphere( s );
@@ -134,7 +156,15 @@
 			this.p1 = this.p1.add(new Vec(x, y));
 			this.p2 = this.p2.add(new Vec(x, y));
 		}
-	};
+	});
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -146,7 +176,7 @@
 		this.radius = settings.radius;
 		
 	};
-	
+	Sphere.prototype = Object.create(ICollider.prototype);
 	
 	
 	//takes two spheres and moves them equal amounts so they arent colliding anymore
@@ -177,15 +207,15 @@
 		//TODO mirror their velocities
 		var pv = new Vec(v.y,-v.x);//perpendicular to line between them, normalized
 		
-		
+		var velMag = s1.speed.magnitude() + s2.speed.magnitude();
 		
 		//todo this is not actually adding their velocities or whatever just guessing
-		s1.speed = new Vec(s1.speed.x, s1.speed.y).mirror(v).multiply(2 * (1 - massDiff));
-		s2.speed = new Vec(s2.speed.x, s2.speed.y).mirror(v).multiply(2 * massDiff);
+		s1.speed = new Vec(s1.speed.x, s1.speed.y).mirror(v).normalize().multiply(velMag * (1 - massDiff));
+		s2.speed = new Vec(s2.speed.x, s2.speed.y).mirror(v).normalize().multiply(velMag * massDiff);
 	};
 	
 	
-	Sphere.prototype = {
+	extend( Sphere.prototype, {
 		
 		//returns how far the two object's colliders are from eachother.
 		violation:function(sphere){
@@ -202,7 +232,12 @@
 		},
 		move:ICollider.prototype.move
 		
-	}
+	});
+	
+	
+	
+	
+	
 	window.Sphere = Sphere;
 	window.Line = Line;
 })()
