@@ -14,19 +14,22 @@
 		
 		
 		var spheres = [
-			new Sphere({pos:{x:180, y:220}, radius:20, speed:{x:0.6, y:0}, mass : 4}),
+			new Sphere({pos:{x:280, y:290}, radius:20, speed:{x:0, y:1}, mass : 3}),
+			new Sphere({pos:{x:280, y:330}, radius:20, speed:{x:0, y:2}, mass : 10}),
 			new Sphere({pos:{x:220, y:220}, radius:5, speed:{x:-0.2, y:0}, mass: 1}),
-			//new Sphere({pos:{x:200, y:270}, radius:30, speed:{x:-0.2, y:-0.8}}),
-			//new Sphere({pos:{x:190, y:400}, radius:80, speed:{x:-0.2, y:-5}, mass:5})//,
+			new Sphere({pos:{x:200, y:270}, radius:30, speed:{x:-0.2, y:-0.8}}),
+			new Sphere({pos:{x:190, y:400}, radius:80, speed:{x:-0.2, y:-5}, mass:5}),
 			
-			//new Line(4, 3, 400, 900, {speed:{x:0.0001,y:0}, pos:{x:0, y:0}, mass:1})
+			new Line(4, 3, 400, 900, {speed:{x:0.0000,y:0}, pos:{x:0, y:0}, mass:100000}),
+			new Line(4, 3, 900, 400, {speed:{x:0.0000,y:0}, pos:{x:0, y:0}, mass:100000}),
+			new Line(0, 490, 900, 490, {speed:{x:0.000,y:0}, pos:{x:0, y:0}, mass:100000})
 		];
 		
 		
 		function addRSpheres(n = 1){
 			function r(x, y){return x + Math.round(Math.random() * (y - x))};
 		
-			spheres.push(new Sphere({ pos:{x:r(50, 500), y:r(50, 500)}, radius: r(5, 20), speed:{x:r(-5, 5)/5, y:r(-5, 5)/5}, mass:r(1, 30) }));
+			spheres.push(new Sphere({ pos:{x:r(50, 500), y:r(50, 500)}, radius: r(5, 20), speed:{x:r(-10, 10)/5, y:r(-10, 10)/5}, mass:r(1, 30) }));
 			
 			
 			if(n > 1){
@@ -34,12 +37,13 @@
 			}
 		}
 		
-		addRSpheres(15);
+		addRSpheres(25);
 		
 		function main(){
 			requestAnimationFrame(main);
 			
 			spheres.forEach(function(s){
+				//if(s.speed.y !== 0)s.speed.y += 0.4;
 				if(s.speed) {
 				s.move(s.speed.x, s.speed.y);
 				};
