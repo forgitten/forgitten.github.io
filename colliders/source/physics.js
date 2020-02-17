@@ -77,6 +77,12 @@
 		this.pos = new Vec(settings.pos.x, settings.pos.y);
 		this.speed = new Vec(settings.speed.x, settings.speed.y);
 		this.acc;
+		
+		/*you may want mutually exclusive collision groups, or for the game to handle
+		 * different groups differently. For example in a fighting game, spheres that 
+		 * represent a character's "attacks" may only intersect with other attacks.
+		*/
+		this.group;
 	};
 	
 	ICollider.prototype = {
@@ -148,7 +154,7 @@
 			var myShadow = perpendicular.dot(this.p2), intersectPoint = perpendicular.multiply(myShadow);//doesn't matter which point
 			var cShadow = perpendicular.dot(c.pos), cPoint = perpendicular.multiply(cShadow);
 			
-			return cShadow - myShadow - c.radius;
+			return Math.abs(cShadow - myShadow) - c.radius;
 		},
 		violationLine:function(){},
 		
@@ -181,8 +187,15 @@
 	
 	//takes two spheres and moves them equal amounts so they arent colliding anymore
 	//then applies friction
-	//TODO this could be applied to any primitive test as long as it returns the same format of violation.
+	//this could be applied to any primitive test as long as it returns the same format of violation.
+	
+	
+	//TODO the method used for finding the plane of collision only works for circles and screws up any other shapes
+	//to fix this we need some helper function to describe what plane the collision happened on
 	Sphere.tempHandleSphere = function(s1, s2){
+		if(s1 instanceof Line && s2 instanceof Line) return;
+		
+		
 		if(s2 instanceof Line){
 			var temp = s2;
 			s2 = s1;
@@ -192,20 +205,37 @@
 		};		
 		var inside = s1.violation(s2);//how far they are inside eachother
 		var massDiff = s1.mass / (s1.mass + s2.mass);
+		if(inside > 0) return;
 		
-		if(inside > 0) return; 
 		
+		//TODO if either of them is a line then use that as the bounce line
 		
 		var v = new Vec(s2.pos.x - s1.pos.x, s2.pos.y - s1.pos.y).normalize();//vector between them
+		//if its a line then we calculate the distance between them differently
+		if(s1 instanceof Line) {
+			var lineVec = s1.p2.subtract(s1.p1).normalize();
+			v = new Vec(lineVec.y, -lineVec.x).multiply(-inside);
+			console.log(v.x + " " + v.y);
+		};
 		
 		
-		//TODO I may have the mass reversed. need unit test.
+		//TODO its using the x and y value of the Lines, which makes no sense considering theyre lines
 		ICollider.prototype.move.call(s1, v.x * inside * (1 - massDiff), v.y * inside * (1 - massDiff));
 		ICollider.prototype.move.call(s2, -v.x * inside * massDiff, -v.y * inside * massDiff);
 		
 		//at this point they should no longer be contacting
 		//TODO mirror their velocities
 		var pv = new Vec(v.y,-v.x);//perpendicular to line between them, normalized
+		if(s1 instanceof Line){
+			v = s1.p2.subtract(s1.p1).normalize();
+			v = new Vec(v.y, -v.x);
+		}else if(s2 instanceof Line){
+			v = s2.p2.subtract(s2.p1).normalize();
+			v = new Vec(v.y, -v.x);
+		}
+		
+		
+		
 		
 		var velMag = s1.speed.magnitude() + s2.speed.magnitude();
 		
@@ -213,6 +243,10 @@
 		s1.speed = new Vec(s1.speed.x, s1.speed.y).mirror(v).normalize().multiply(velMag * (1 - massDiff));
 		s2.speed = new Vec(s2.speed.x, s2.speed.y).mirror(v).normalize().multiply(velMag * massDiff);
 	};
+	
+	
+	
+	
 	
 	
 	extend( Sphere.prototype, {
