@@ -76,7 +76,7 @@
 		this.mass = settings.mass || 1;
 		this.pos = new Vec(settings.pos.x, settings.pos.y);
 		this.speed = new Vec(settings.speed.x, settings.speed.y);
-		this.acc;
+		this.acc = settings.acc ? new Vec(settings.acc.x, settings.acc.y): new Vec(0, 0);
 		
 		/*you may want mutually exclusive collision groups, or for the game to handle
 		 * different groups differently. For example in a fighting game, spheres that 
@@ -143,7 +143,7 @@
 		
 		
 		
-		//TODO write test
+		//this works perfectly, and returns negative regardless of penetration direction!
 		violationSphere:function(c){
 			//to check if the circle intersects the line, perform a dot product on a ray perpendicular to the circle
 			//and see if the distance between the circle center and projected point is smaller than the radius
@@ -194,51 +194,42 @@
 	//to fix this we need some helper function to describe what plane the collision happened on
 	Sphere.tempHandleSphere = function(s1, s2){
 		if(s1 instanceof Line && s2 instanceof Line) return;
+		if(s1 instanceof Line ){
+			var temp = s1;
+			s1 = s2;
+			s2 = temp;
+		};
 		
-		
-		if(s2 instanceof Line){
-			var temp = s2;
-			s2 = s1;
-			s1 = temp;
-			
-			
-		};		
-		var inside = s1.violation(s2);//how far they are inside eachother
+		//if the second one is a line we have to use that one since circle doesnt understand
+		var inside = (s2 instanceof Line) ? s2.violation(s1) : s1.violation(s2);//how far they are inside eachother
 		var massDiff = s1.mass / (s1.mass + s2.mass);
 		if(inside > 0) return;
 		
 		
-		//TODO if either of them is a line then use that as the bounce line
-		
 		var v = new Vec(s2.pos.x - s1.pos.x, s2.pos.y - s1.pos.y).normalize();//vector between them
 		//if its a line then we calculate the distance between them differently
-		if(s1 instanceof Line) {
-			var lineVec = s1.p2.subtract(s1.p1).normalize();
-			v = new Vec(lineVec.y, -lineVec.x).multiply(-inside);
-			console.log(v.x + " " + v.y);
+		if(s1 instanceof Line || s2 instanceof Line){
+			//TODO why does the circle one work?
+			var line, circle;
+			if(s1 instanceof Line) {line = s1, circle = s2;}
+			else {line = s2, circle = s1;};
+			var lineVec = new Vec(line.p2.x - line.p1.x, line.p2.y- line.p1.y);//vector parallel to the line
+			var pVec = new Vec(lineVec.y, -lineVec.x);//vector perpendicular to x;
+			
+			pVec = pVec.normalize();
+			
+			//TODO balls jiggle if they are the s2, but seemingly not if they're s1?
+			if(pVec.dot(circle.pos) > pVec.dot(line.p2))pVec = new Vec(-pVec.x, -pVec.y);//reverse it;
+			v = pVec;
 		};
+	
 		
-		
-		//TODO its using the x and y value of the Lines, which makes no sense considering theyre lines
+		//separates the two objects so they no longer penetrate
 		ICollider.prototype.move.call(s1, v.x * inside * (1 - massDiff), v.y * inside * (1 - massDiff));
 		ICollider.prototype.move.call(s2, -v.x * inside * massDiff, -v.y * inside * massDiff);
 		
-		//at this point they should no longer be contacting
-		//TODO mirror their velocities
-		var pv = new Vec(v.y,-v.x);//perpendicular to line between them, normalized
-		if(s1 instanceof Line){
-			v = s1.p2.subtract(s1.p1).normalize();
-			v = new Vec(v.y, -v.x);
-		}else if(s2 instanceof Line){
-			v = s2.p2.subtract(s2.p1).normalize();
-			v = new Vec(v.y, -v.x);
-		}
-		
-		
-		
-		
+
 		var velMag = s1.speed.magnitude() + s2.speed.magnitude();
-		
 		//todo this is not actually adding their velocities or whatever just guessing
 		s1.speed = new Vec(s1.speed.x, s1.speed.y).mirror(v).normalize().multiply(velMag * (1 - massDiff));
 		s2.speed = new Vec(s2.speed.x, s2.speed.y).mirror(v).normalize().multiply(velMag * massDiff);
