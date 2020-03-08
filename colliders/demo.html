@@ -4,32 +4,42 @@
 	<script src = "source/utilities.js"></script>
 	<script src = "source/vec2.js"></script>
 	<script src = "source/physics.js"></script>
+	<script src = "source/tile.js"></script>
+	<style>
+		#frame{
+			position:absolute;
+			left:8px;
+		}
+	</style>
 </head>
 <body>
 	<canvas id ="main" width = "500" height = "500"></canvas>
+	<canvas id ="frame" width = "500" height = "500"></canvas>
 	<script>
 		var canvas = document.getElementById('main');
+		var debug = document.getElementById('frame');
 		var context = canvas.getContext('2d');
-		
+		var frameContext = debug.getContext('2d');
 		
 		
 		var spheres = [
-			new Sphere({pos:{x:280, y:290}, radius:20, speed:{x:0, y:1}, mass : 3}),
-			new Sphere({pos:{x:280, y:330}, radius:20, speed:{x:0, y:2}, mass : 10}),
-			new Sphere({pos:{x:220, y:220}, radius:5, speed:{x:-0.2, y:0}, mass: 1}),
-			new Sphere({pos:{x:200, y:270}, radius:30, speed:{x:-0.2, y:-0.8}}),
-			new Sphere({pos:{x:190, y:400}, radius:80, speed:{x:-0.2, y:-5}, mass:5}),
-			
-			new Line(4, 3, 400, 900, {speed:{x:0.0000,y:0}, pos:{x:0, y:0}, mass:100000}),
-			new Line(4, 3, 900, 400, {speed:{x:0.0000,y:0}, pos:{x:0, y:0}, mass:100000}),
-			new Line(0, 490, 900, 490, {speed:{x:0.000,y:0}, pos:{x:0, y:0}, mass:100000})
+			new Sphere({pos:{x:230, y:100}, radius:20, speed:{x:-1, y:-10}, mass : 3}),
+			//new Sphere({pos:{x:230, y:290}, radius:20, speed:{x:-1, y:0}, mass : 3}),
+			//new Sphere({pos:{x:280, y:330}, radius:20, speed:{x:-0.3, y:2}, mass : 100}),
+			//new Sphere({pos:{x:220, y:220}, radius:50, speed:{x:-0.2, y:0}, mass: 1}),
+			//new Sphere({pos:{x:200, y:270}, radius:30, speed:{x:-0.2, y:-0.8}}),
+			//new Sphere({pos:{x:190, y:400}, radius:80, speed:{x:-0.2, y:-5}, mass:5}),
+			new Line(490, -30, 490, 500, {speed:{x:0.0000,y:0}, pos:{x:0, y:0}, mass:100000}),
+			new Line(0, 490, 900, 490, {speed:{x:0.000,y:0}, pos:{x:0, y:0}, mass:100000}),
+			new Line(15,0, 15, 490, {speed:{x:0.000,y:0}, pos:{x:0, y:0}, mass:100000}),
+			new Line(4,10, 3000, 10, {speed:{x:0.000,y:0}, pos:{x:0, y:0}, mass:100000}),
+			new Line(4,10, 1000, 1500, {speed:{x:0.000,y:0}, pos:{x:0, y:0}, mass:100000})
 		];
-		
-		
+		addRSpheres(25);
 		function addRSpheres(n = 1){
 			function r(x, y){return x + Math.round(Math.random() * (y - x))};
 		
-			spheres.push(new Sphere({ pos:{x:r(50, 500), y:r(50, 500)}, radius: r(5, 20), speed:{x:r(-10, 10)/5, y:r(-10, 10)/5}, mass:r(1, 30) }));
+			spheres.push(new Sphere({ pos:{x:r(50, 450), y:r(50, 450)}, radius: r(5, 20), speed:{x:r(-5, 5)/5, y:r(-5, 5)/5}, mass:r(1, 30) }));
 			
 			
 			if(n > 1){
@@ -37,13 +47,13 @@
 			}
 		}
 		
-		addRSpheres(25);
+		
 		
 		function main(){
 			requestAnimationFrame(main);
 			
 			spheres.forEach(function(s){
-				//if(s.speed.y !== 0)s.speed.y += 0.4;
+				if(s.speed.y !== 0)s.speed.y += 0.3;
 				if(s.speed) {
 				s.move(s.speed.x, s.speed.y);
 				};

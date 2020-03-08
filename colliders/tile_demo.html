@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src = "source/utilities.js"></script>
+	<script src = "source/tile.js"></script>
+	<style>
+		#frame{
+			position:absolute;
+			left:8px;
+		}
+	</style>
+</head>
+<body>
+	<canvas id ="main" width = "500" height = "500"></canvas>
+	<script>
+	var canvas = document.getElementById('main');
+	var context = canvas.getContext('2d');
+	
+	var arrowKeys = {left:false, down:false, up:false, right:false};
+	document.addEventListener('keydown', function(e){
+		switch( e.keyCode ){
+			case 38:
+			arrowKeys.up = true;
+			break;
+			case 40:
+			arrowKeys.down = true;
+			break;
+			case 37:
+			arrowKeys.left = true;
+			break;
+			case 39:
+			arrowKeys.right = true;
+		};
+	});
+	
+	document.addEventListener('keyup', function(e){
+		switch( e.keyCode ){
+			case 38:
+			arrowKeys.up = false;
+			break;
+			case 40:
+			arrowKeys.down = false;
+			break
+			case 37:
+			arrowKeys.left = false;
+			break;
+			case 39:
+			arrowKeys.right = false;
+		};
+	});
+	
+	
+	
+	
+	var sprites = {
+		grass:{
+			fileName:'grass.png'
+		}
+	};
+	var spriteMap = [0,sprites.grass];
+	
+	Object.keys(sprites).forEach(function(k){
+		var i = sprites[k].image = new Image();
+		sprites[k].loaded = false;
+		i.onload = (function(){this.loaded = true}).bind(sprites[k]);
+		i.src = "assets/" + sprites[k].fileName;
+	});
+	
+	
+	
+	var testGrid = [
+		[1,1,0,1,1],
+		[1,0,0,1,1],
+		[1,0,1,0,1],
+		[1,0,0,0,1],
+		[1,1,1,1,1]
+	]
+	
+	var map = new TileMap({
+		tileSize:64,
+		map:testGrid
+	});
+	
+	
+	var player = {
+		pos:{x:32 * 3, y:80},
+		size:{x:16, y:32}
+	};
+	
+	
+	
+	function update(){
+		//TODO make these a combined vector and give them to the trace engine
+		player.move = {x:0, y:0};
+		
+		player.move.y += 1;
+		player.move.x += 0;
+		if(arrowKeys.right == true)player.move.x += 3;
+		if(arrowKeys.left == true) player.move.x -= 3;
+		
+		if(! (player.move.x == 0 && player.move.y == 0)){
+			player.testedTileIndex = map.getTileIndex({
+				x:player.pos.x + player.move.x + (player.move.x > 0 ? player.size.x : 0),
+				y:player.pos.y + player.move.y + (player.move.y > 0 ? player.size.y : 0)
+			});
+		
+			player.move = map.resolve(player.pos, {x:player.pos.x + player.size.x, y:player.pos.y + player.size.y}, player.move);
+			player.pos.x += player.move.x, player.pos.y+= player.move.y;
+		}
+		
+		
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		for (var i = 0; i < testGrid.length; i++){
+			for(var j = 0; j < testGrid[i].length; j++){
+				if(testGrid[i][j] > 0){
+					
+					context.drawImage(spriteMap[testGrid[i][j]].image, j * 64, i * 64, 64, 64);
+				}
+			};
+		};
+
+		context.save();
+			context.strokeStyle = "red";
+			context.beginPath();
+			if(player.testedTileIndex)context.rect(player.testedTileIndex.x * 64, player.testedTileIndex.y * 64, 64, 64);
+			context.stroke();
+		context.restore();
+		
+		
+		context.fillRect(player.pos.x, player.pos.y, player.size.x, player.size.y);
+	
+		requestAnimationFrame(update);
+	};
+	
+	
+	requestAnimationFrame(update);
+	
+	
+
+	</script>
+
+</body>
+</html>
