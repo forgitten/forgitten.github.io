@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html>
+<head>
 	<link rel="stylesheet" href="../../game/main.css">
 </head>
 <body>
@@ -69,7 +72,7 @@
 		window.addEventListener("keydown", handle_keydown);
 		window.addEventListener("keyup", handle_keyup);
 		handle_resize();
-		var g = new Grid(0.04, 0.08, [{x:0.4, y:0.4, w:0.09, h:0.09, fillStyle:"orange"}, /*{x:0.7, y:0.7, w:0.2, h:0.15, fillStyle:"yellow"} */]);
+		var g = new Grid(0.05, 0.05, [{x:0.4, y:0.4, w:0.2, h:0.2, fillStyle:"orange"}/*, {x:0.6, y:0.6, w:0.8, h:0.6, fillStyle:"yellow"}*/ ]);
 		
 		
 		
@@ -80,7 +83,7 @@
 		//all dimensions should be spelled out in decimals, 1 is the total canvas
 		function Grid(i, j, testBoxes){
 			this.i = i, this.j = j, this.testBoxes = testBoxes;
-			for(var b of this.testBoxes){b.move = {x:0.1, y:0.1}; b.collisions = [];};
+			for(var b of this.testBoxes){b.move = {x:0.4, y:0.0}; b.collisions = [];};
 			this.activeBox = this.testBoxes[0];//one that actually moves
 			
 		};
@@ -160,9 +163,27 @@
 		};
 		
 		
+		//this wrapper function feeds the main algorithm positive values then re interprets the results.
+		//the below algorith is too difficult to maintain in a direction agnostic way.
 		Grid.prototype.generateCollisions = function( box ){
+			if(box.move.x == 0 && box.move.y == 0) box.collisions = [];//if its not moving do nothing
+			
+			
+			
 			this.sweepBoxInside(box);
 		};
+		
+		//Grid.prototype.sweepBoxInside = function( box ){
+
+		//};
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		
 		
@@ -176,30 +197,71 @@
 			//currentX and currentY are needed to test for tiles clipped by the non active corner
 			var currentX = box.x + box.w, currentY = box.y + box.h;
 			
-			//starts with the time when the line first intercepts the next vertical and horizontal gridline
-			var xTime = Grid.getLineTime(currentX, box.move.x, (tileCounter.x + 1) * this.i);
-			var yTime = Grid.getLineTime(currentY, box.move.y, (tileCounter.y + 1) * this.j);
-			
 			//parametric time it takes for the line to cross from one gridline to another in each direction
 			var xGridTime = this.i / box.move.x, yGridTime = this.j / box.move.y;
+			//starts with the time when the line first intercepts the next vertical and horizontal gridline
+			var xTime = Grid.getLineTime(currentX, box.move.x, (tileCounter.x + 1) * this.i);
+			if(xTime < 0.00001)xTime = this.i * (tileCounter.x + 1);
+			if(Math.abs(xTime - xGridTime) < 0.00001) xTime = xGridTime;
+			var yTime = Grid.getLineTime(currentY, box.move.y, (tileCounter.y + 1) * this.j);
+			if(yTime < 0.00001)yTime = this.j * (tileCounter.j + 1);
+			if(Math.abs(yTime - yGridTime) < 0.00001) yTime = yGridTime;
+			
 			var timeCounter = Math.min(xTime, yTime), timeEnd = 1;
 			
 			
 			
 			//these variables are used for the inner loop that calculates the side bits
 			var crossCounter;
-				
+			
+			
 			while(timeCounter < timeEnd){
 				currentX += box.move.x * timeCounter;//update the real x and y values
 				currentY += box.move.y * timeCounter;
-				if(xTime < yTime){
-					
+				
+				if(xTime == yTime){//there may be a clever way to circumvent this block of code
+				//by selectively not moving some values but I could not figure it out
+					xTime += xGridTime; yTime += yGridTime;
+					tileCounter.x++; tileCounter.y++;
+					crossCounter = box.h / this.j;
+					while(crossCounter > 0){
+						box.collisions.push({x:tileCounter.x, y:tileCounter.y - crossCounter});
+						crossCounter --;
+					};
+					crossCounter = box.w / this.i;
+					while(crossCounter > 0){
+						box.collisions.push({x:tileCounter.x - crossCounter, y:tileCounter.y});
+						crossCounter --;
+					};
+				
+				
+				}else if(xTime < yTime){
 					xTime += xGridTime;
 					tileCounter.x++;
-				}else{
+					
+					
+				
+					crossCounter = Math.floor ( (((currentY - box.h) % this.j ) +box.h ) /this.j  );
+					while(crossCounter > 0){
+						box.collisions.push({x:tileCounter.x, y:tileCounter.y - crossCounter});
+						crossCounter --;
+					};
+				}else {
 					yTime += yGridTime;
 					tileCounter.y++;
-				}
+				
+				
+					crossCounter = Math.floor ( (((currentX - box.w) % this.i ) +box.w ) /this.i  );
+					while(crossCounter > 0){
+						box.collisions.push({x:tileCounter.x - crossCounter, y:tileCounter.y});
+						crossCounter --;
+					};
+				};
+				
+				
+				
+				
+				
 				timeCounter = Math.min(xTime, yTime);
 				//currently send time of block intersection with output
 				box.collisions.push({x:tileCounter.x, y:tileCounter.y});
