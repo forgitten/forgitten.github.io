@@ -72,8 +72,7 @@
 		window.addEventListener("keydown", handle_keydown);
 		window.addEventListener("keyup", handle_keyup);
 		handle_resize();
-		var g = new Grid(0.05, 0.05, [{x:0.4, y:0.4, w:0.2, h:0.2, fillStyle:"orange"}/*, {x:0.6, y:0.6, w:0.8, h:0.6, fillStyle:"yellow"}*/ ]);
-		
+		var g = new Grid(0.005, 0.005, [{x:0.4, y:0.4, w:0.2, h:0.2, fillStyle:"orange"}, /*{x:0.4, y:0.4, w:0.2, h:0.2, fillStyle:"yellow"}*/ ]);
 		
 		
 		
@@ -83,7 +82,7 @@
 		//all dimensions should be spelled out in decimals, 1 is the total canvas
 		function Grid(i, j, testBoxes){
 			this.i = i, this.j = j, this.testBoxes = testBoxes;
-			for(var b of this.testBoxes){b.move = {x:0.4, y:0.0}; b.collisions = [];};
+			for(var b of this.testBoxes){b.move = {x:-0.2, y:-0.2}; b.collisions = [];};
 			this.activeBox = this.testBoxes[0];//one that actually moves
 			
 		};
@@ -98,8 +97,8 @@
 		
 		Grid.prototype.draw  = function( canvas ){
 			var cx = canvas.getContext("2d");
-			function drawLine( x, y , i, j){
-				cx.strokeStyle = "purple"; cx.lineWidth = 2;
+			function drawLine( x, y , i, j, strokeStyle, strokeWidth){
+				if(!strokeStyle)cx.strokeStyle = "purple"; if(!strokeWidth) cx.lineWidth = 2;
 				cx.beginPath();cx.moveTo(x, y);cx.lineTo(i, j);cx.stroke();
 			};
 			
@@ -128,15 +127,30 @@
 		
 		
 		Grid.prototype.drawMove = function(box, canvas, cx, drawLine ){
-			var movePoint = {
-				x: (box.move.x < 0) ? box.x : box.x + box.w,
-				y: (box.move.y < 0) ? box.y : box.y + box.h
-			};
-			drawLine(movePoint.x * canvas.width, movePoint.y * canvas.height, (movePoint.x + box.move.x) * canvas.width, (movePoint.y + box.move.y) * canvas.height);
+		
+			
+			
+			var movePoints = [{
+					x: (box.move.x < 0) ? box.x : box.x + box.w,
+					y: (box.move.y < 0) ? box.y : box.y + box.h
+				},
+				{
+					x:(box.move.y < 0) ? box.x : box.x + box.w,
+					y:(box.move.x < 0) ? box.y + box.h : box.y
+				},{
+					x:(box.move.y < 0) ? box.x + box.w : box.x,
+					y:(box.move.x < 0) ? box.y : box.y + box.h
+				}
+			];
+			
+			
+			
+			
+			for(var movePoint of movePoints){drawLine(movePoint.x * canvas.width, movePoint.y * canvas.height, (movePoint.x + box.move.x) * canvas.width, (movePoint.y + box.move.y) * canvas.height, "green")};
 			
 			for(var i of box.collisions){
 				cx.fillStyle = "rgba(0, 0, 255, 0.5)";
-				cx.fillRect(i.x * this.i * canvas.width, i.y * this.j * canvas.height, this.i * canvas.width, this.j * canvas.height);
+				cx.fillRect((i.x) * this.i * canvas.width, (i.y) * this.j * canvas.height, this.i * canvas.width, this.j * canvas.height);
 			}
 			
 			
@@ -173,9 +187,85 @@
 			this.sweepBoxInside(box);
 		};
 		
-		//Grid.prototype.sweepBoxInside = function( box ){
-
-		//};
+		
+		//TODO should an angle such as 1 1 intercept edges
+		Grid.prototype.sweepBoxInside = function( box ){
+			box.collisions = [];
+			var normalizedMove = {x: Math.abs(box.move.x),y:Math.abs(box.move.y)};
+			var xDirection = Math.sign(box.move.x), yDirection = Math.sign(box.move.y);
+			var currentX = (xDirection < 0) ? box.x : box.x + box.w, currentY = (yDirection < 0) ? box.y : box.y + box.h;
+			var startX = currentX, startY = currentY;//used for later calculations
+			var xGridTime = this.i / normalizedMove.x, yGridTime = this.j / normalizedMove.y;
+			
+			
+			//the first value in tileCounter is not ever shown, because its the tile the box is currently already in.
+			//when moving left we are targeting the entry point of the tile we're in, when right we target the next tile's entry point
+			var tileCounter = {
+				x: Math.floor(currentX / this.i),
+				y: Math.floor(currentY / this.j),
+				firstTargetX:(xDirection > 0) ? Math.floor(currentX / this.i) + 1: Math.floor(currentX / this.i),
+				firstTargetY:(yDirection > 0) ? Math.floor(currentY / this.j) + 1: Math.floor(currentY / this.j)
+			};
+			if((Math.abs(currentX%this.i) < 0.00001) && (xDirection < 0) ) tileCounter.x--;
+			if((Math.abs(currentY%this.j) < 0.00001) && (yDirection < 0) ) tileCounter.y--;
+			
+			var xTime = Grid.getLineTime(currentX, box.move.x, tileCounter.firstTargetX * this.i);
+			var yTime = Grid.getLineTime(currentY, box.move.y, tileCounter.firstTargetY * this.j);
+			//remove this line if you want the function to be inclusive of tiles box is already in
+			//but also must move start tile back or make loop run once before advancing tilecounter
+			if(Math.abs(xTime % xGridTime) < 0.00001)xTime = xGridTime;
+			
+			if(Math.abs(yTime % yGridTime) < 0.00001)yTime = yGridTime;
+			
+			
+			var timeCounter = Math.min(xTime, yTime), timeEnd = 1;
+			
+			
+			var crossCounter, crossOverFlow, shouldDrawX, shouldDrawY;
+			while(timeCounter <= timeEnd){
+				currentX = startX + box.move.x * timeCounter, currentY = startY + box.move.y * timeCounter;
+			
+				shouldDrawX = shouldDrawY = false;
+				if(xTime == yTime){
+				xTime += xGridTime, yTime += yGridTime;
+				tileCounter.x += xDirection, tileCounter.y += yDirection;
+				shouldDrawX = shouldDrawY = true;
+				}else if(xTime < yTime){
+					xTime += xGridTime;
+					tileCounter.x+= xDirection;
+					shouldDrawY = true;
+				}else{
+					yTime += yGridTime;
+					tileCounter.y += yDirection;
+					shouldDrawX = true;
+				};
+				
+				if(shouldDrawX){
+				//todo this modulo introduces roundoff error that sometimes generates extra boxes
+					crossOverFlow = (Math.abs( currentX % this.i - this.i) < 0.00001) ? 0 : currentX % this.i;
+					crossCounter = Math.floor (( crossOverFlow + box.w )/ this.i);
+					
+					while(crossCounter > 0){
+						box.collisions.push({x:tileCounter.x - crossCounter * xDirection, y:tileCounter.y});
+						crossCounter --;
+					};
+				};
+				
+				if(shouldDrawY){
+					crossOverFlow = (currentY % this.j - this.j < 0.00001) ? 0 : currentY % this.j;
+					crossCounter  = Math.floor( (crossOverFlow + box.h) / this.i);
+					while(crossCounter > 0){
+						box.collisions.push({x:tileCounter.x, y:tileCounter.y - crossCounter * yDirection});
+						crossCounter --;
+					};
+				};
+				
+				
+				
+				timeCounter = Math.min(xTime, yTime);
+				box.collisions.push({x:tileCounter.x, y:tileCounter.y});
+			};
+		};
 		
 		
 		
@@ -189,7 +279,7 @@
 		
 		//assumes box is moving up and right, wrapper function will negate values according to real box direction
 		//compiles all tiles that a box will contact
-		Grid.prototype.sweepBoxInside = function( box ){
+		Grid.prototype.sweepBoxInsideOld = function( box ){
 			box.collisions = [];
 			
 			//tileCounter holds what tile the end of the line currently resides in as we test
@@ -216,8 +306,8 @@
 			
 			
 			while(timeCounter < timeEnd){
-				currentX += box.move.x * timeCounter;//update the real x and y values
-				currentY += box.move.y * timeCounter;
+				currentX = box.x + box.w + box.move.x * timeCounter;//update the real x and y values
+				currentY = box.y + box.h + box.move.y * timeCounter;
 				
 				if(xTime == yTime){//there may be a clever way to circumvent this block of code
 				//by selectively not moving some values but I could not figure it out
